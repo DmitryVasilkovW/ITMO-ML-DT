@@ -1,6 +1,6 @@
 import pandas as pd
 
-url = "https://archive.ics.uci.edu/ml/machine-learning-databases/tic-tac-toe/tic-tac-toe.data"
+url = "../../data/tic-tac-toe.data"
 
 
 def get_data():
