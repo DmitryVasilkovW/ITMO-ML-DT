@@ -14,25 +14,15 @@ class MyDecisionTree:
 
     def _build_tree(self, data, depth):
         x, y = data[:, :-1], data[:, -1]
-        num_samples, num_features = x.shape
+        result = self._get_leaf_or_params(x, y, depth)
 
-        leaf = self._try_to_get_leaf(y, depth=depth, num_samples=num_samples)
-        if leaf is not None:
-            return leaf
+        if isinstance(result, dict):
+            return result
 
-        best_feature, best_threshold, best_gain = self._get_self_best_params(num_features, x, y)
-
-        leaf = self._try_to_get_leaf(y, best_gain=best_gain)
-        if leaf is not None:
-            return leaf
-
-        left_indices = x[:, best_feature] <= best_threshold
-        right_indices = ~left_indices
-
-        leaf = self._try_to_get_leaf(y, left_indices=left_indices, right_indices=right_indices)
-        if leaf is not None:
-            return leaf
-
+        best_feature = result[0]
+        best_threshold = result[1]
+        left_indices = result[2]
+        right_indices = result[3]
         left_subtree = self._build_tree(data[left_indices], depth + 1)
         right_subtree = self._build_tree(data[right_indices], depth + 1)
 
@@ -44,7 +34,33 @@ class MyDecisionTree:
             "right": right_subtree,
         }
 
-    def _try_to_get_leaf(self, y, depth=None, num_samples=None, best_gain=None, left_indices=None, right_indices=None):
+    def _get_leaf_or_params(self, x, y, depth):
+        num_samples, num_features = x.shape
+        params = []
+        leaf = self._try_to_set_leaf(y, depth=depth, num_samples=num_samples)
+        if leaf is not None:
+            return leaf
+
+        best_feature, best_threshold, best_gain = self._get_self_best_params(num_features, x, y)
+        params.append(best_feature)
+        params.append(best_threshold)
+
+        leaf = self._try_to_set_leaf(y, best_gain=best_gain)
+        if leaf is not None:
+            return leaf
+
+        left_indices = x[:, best_feature] <= best_threshold
+        right_indices = ~left_indices
+        params.append(left_indices)
+        params.append(right_indices)
+
+        leaf = self._try_to_set_leaf(y, left_indices=left_indices, right_indices=right_indices)
+        if leaf is not None:
+            return leaf
+
+        return params
+
+    def _try_to_set_leaf(self, y, depth=None, num_samples=None, best_gain=None, left_indices=None, right_indices=None):
         leaf = {"type": "leaf", "value": np.mean(y) > 0.5}
 
         if depth is not None and num_samples is not None:
