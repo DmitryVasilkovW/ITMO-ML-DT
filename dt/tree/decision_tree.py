@@ -8,33 +8,30 @@ class MyDecisionTree:
         self.min_samples_leaf = min_samples_leaf
         self.tree = None
 
-    def fit(self, X, y):
-        data = np.c_[X, y]
+    def fit(self, x, y):
+        data = np.c_[x, y]
         self.tree = self._build_tree(data, depth=0)
 
     def _build_tree(self, data, depth):
-        X, y = data[:, :-1], data[:, -1]
-        num_samples, num_features = X.shape
+        x, y = data[:, :-1], data[:, -1]
+        num_samples, num_features = x.shape
 
-        if depth == self.max_depth or num_samples < self.min_samples_split or np.unique(y).size == 1:
-            return {"type": "leaf", "value": np.mean(y) > 0.5}
+        leaf = self._try_to_get_leaf(y, depth=depth, num_samples=num_samples)
+        if leaf is not None:
+            return leaf
 
-        best_feature, best_threshold, best_gain = None, None, -np.inf
-        for feature_idx in range(num_features):
-            thresholds = np.unique(X[:, feature_idx])
-            for threshold in thresholds:
-                gain = self._information_gain(X[:, feature_idx], y, threshold)
-                if gain > best_gain:
-                    best_gain, best_feature, best_threshold = gain, feature_idx, threshold
+        best_feature, best_threshold, best_gain = self._get_self_best_params(num_features, x, y)
 
-        if best_gain == -np.inf:
-            return {"type": "leaf", "value": np.mean(y) > 0.5}
+        leaf = self._try_to_get_leaf(y, best_gain=best_gain)
+        if leaf is not None:
+            return leaf
 
-        left_indices = X[:, best_feature] <= best_threshold
+        left_indices = x[:, best_feature] <= best_threshold
         right_indices = ~left_indices
 
-        if sum(left_indices) < self.min_samples_leaf or sum(right_indices) < self.min_samples_leaf:
-            return {"type": "leaf", "value": np.mean(y) > 0.5}
+        leaf = self._try_to_get_leaf(y, left_indices=left_indices, right_indices=right_indices)
+        if leaf is not None:
+            return leaf
 
         left_subtree = self._build_tree(data[left_indices], depth + 1)
         right_subtree = self._build_tree(data[right_indices], depth + 1)
@@ -46,6 +43,34 @@ class MyDecisionTree:
             "left": left_subtree,
             "right": right_subtree,
         }
+
+    def _try_to_get_leaf(self, y, depth=None, num_samples=None, best_gain=None, left_indices=None, right_indices=None):
+        leaf = {"type": "leaf", "value": np.mean(y) > 0.5}
+
+        if depth is not None and num_samples is not None:
+            if depth == self.max_depth or num_samples < self.min_samples_split or np.unique(y).size == 1:
+                return leaf
+
+        if best_gain is not None:
+            if best_gain == -np.inf:
+                return leaf
+
+        if left_indices is not None and right_indices is not None:
+            if sum(left_indices) < self.min_samples_leaf or sum(right_indices) < self.min_samples_leaf:
+                return leaf
+
+        return None
+
+    def _get_self_best_params(self, num_features, x, y):
+        best_feature, best_threshold, best_gain = None, None, -np.inf
+        for feature_idx in range(num_features):
+            thresholds = np.unique(x[:, feature_idx])
+            for threshold in thresholds:
+                gain = self._information_gain(x[:, feature_idx], y, threshold)
+                if gain > best_gain:
+                    best_gain, best_feature, best_threshold = gain, feature_idx, threshold
+
+        return best_feature, best_threshold, best_gain
 
     def _information_gain(self, feature, y, threshold):
         parent_entropy = self._entropy(y)
@@ -65,8 +90,8 @@ class MyDecisionTree:
         proportions = np.bincount(y.astype(int)) / len(y)
         return -np.sum([p * np.log2(p) for p in proportions if p > 0])
 
-    def predict(self, X):
-        return np.array([self._predict_sample(sample, self.tree) for sample in X])
+    def predict(self, x):
+        return np.array([self._predict_sample(sample, self.tree) for sample in x])
 
     def _predict_sample(self, sample, tree):
         if tree["type"] == "leaf":
