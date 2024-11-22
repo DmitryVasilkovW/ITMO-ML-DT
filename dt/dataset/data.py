@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 url = "https://archive.ics.uci.edu/ml/machine-learning-databases/tic-tac-toe/tic-tac-toe.data"
@@ -19,8 +18,3 @@ def get_data():
     data['Class'] = data['Class'].apply(lambda x: 1 if x == 'positive' else 0)
 
     return data
-
-
-def accuracy_metric(y_true, y_pred):
-    y_pred = np.where(y_pred >= 0, 1, -1)
-    return np.mean(y_true == y_pred)
