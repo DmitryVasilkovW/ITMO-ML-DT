@@ -16,7 +16,7 @@ class MyRandomForest:
         for _ in range(self.n_estimators):
             indices = np.random.choice(n_samples, n_samples, replace=True)
             X_sample = X[indices]
-            y_sample = y[indices]
+            y_sample = y.to_numpy()[indices]
             tree = MyDecisionTree(max_depth=self.max_depth, min_samples_split=self.min_samples_split,
                                   min_samples_leaf=self.min_samples_leaf)
             tree.fit(X_sample, y_sample)

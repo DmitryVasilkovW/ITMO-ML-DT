@@ -14,7 +14,7 @@ y_test = repo.get_axis("y", "test")
 
 
 def show_my_decision_tree_impl():
-    depths = range(1, 11)
+    depths = range(1, 21)
     train_scores = []
     test_scores = []
 
@@ -56,7 +56,7 @@ def show_my_random_forest_impl():
 
 
 def show_decision_tree_classifier_lib_impl():
-    depths = range(1, 11)
+    depths = range(1, 21)
     train_scores = []
     test_scores = []
 

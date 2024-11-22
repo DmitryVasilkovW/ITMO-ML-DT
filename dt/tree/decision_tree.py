@@ -9,61 +9,77 @@ class MyDecisionTree:
         self.tree = None
 
     def fit(self, X, y):
-        self.tree = self._build_tree(X, y)
+        data = np.c_[X, y]
+        self.tree = self._build_tree(data, depth=0)
 
-    def _build_tree(self, X, y, depth=0):
+    def _build_tree(self, data, depth):
+        X, y = data[:, :-1], data[:, -1]
         num_samples, num_features = X.shape
-        if (self.max_depth is not None and depth >= self.max_depth) or num_samples < self.min_samples_split or len(
-                np.unique(y)) == 1:
-            return {"value": self._most_common_label(y)}
 
-        best_feature, best_threshold = self._find_best_split(X, y)
-        if best_feature is None:
-            return {"value": self._most_common_label(y)}
+        if depth == self.max_depth or num_samples < self.min_samples_split or np.unique(y).size == 1:
+            return {"type": "leaf", "value": np.mean(y) > 0.5}
 
-        left_idx, right_idx = self._split(X[:, best_feature], best_threshold)
-        left_tree = self._build_tree(X[left_idx, :], y[left_idx], depth + 1)
-        right_tree = self._build_tree(X[right_idx, :], y[right_idx], depth + 1)
-
-        return {"feature": best_feature, "threshold": best_threshold, "left": left_tree, "right": right_tree}
-
-    def _find_best_split(self, X, y):
-        num_samples, num_features = X.shape
-        best_gini = float("inf")
-        best_feature = None
-        best_threshold = None
-
-        for feature in range(num_features):
-            thresholds = np.unique(X[:, feature])
+        best_feature, best_threshold, best_gain = None, None, -np.inf
+        for feature_idx in range(num_features):
+            thresholds = np.unique(X[:, feature_idx])
             for threshold in thresholds:
-                gini = self._calculate_gini(y, X[:, feature] <= threshold)
-                if gini < best_gini:
-                    best_gini = gini
-                    best_feature = feature
-                    best_threshold = threshold
+                gain = self._information_gain(X[:, feature_idx], y, threshold)
+                if gain > best_gain:
+                    best_gain, best_feature, best_threshold = gain, feature_idx, threshold
 
-        return best_feature, best_threshold
+        if best_gain == -np.inf:
+            return {"type": "leaf", "value": np.mean(y) > 0.5}
 
-    def _calculate_gini(self, y, condition):
-        left_y = y[condition]
-        right_y = y[~condition]
-        left_gini = 1 - sum((np.sum(left_y == c) / len(left_y)) ** 2 for c in np.unique(y)) if len(left_y) > 0 else 0
-        right_gini = 1 - sum((np.sum(right_y == c) / len(right_y)) ** 2 for c in np.unique(y)) if len(
-            right_y) > 0 else 0
-        return len(left_y) / len(y) * left_gini + len(right_y) / len(y) * right_gini
+        left_indices = X[:, best_feature] <= best_threshold
+        right_indices = ~left_indices
 
-    def _split(self, feature, threshold):
-        return feature <= threshold, feature > threshold
+        if sum(left_indices) < self.min_samples_leaf or sum(right_indices) < self.min_samples_leaf:
+            return {"type": "leaf", "value": np.mean(y) > 0.5}
 
-    def _most_common_label(self, y):
-        return np.bincount(y).argmax()
+        left_subtree = self._build_tree(data[left_indices], depth + 1)
+        right_subtree = self._build_tree(data[right_indices], depth + 1)
+
+        return {
+            "type": "node",
+            "feature": best_feature,
+            "threshold": best_threshold,
+            "left": left_subtree,
+            "right": right_subtree,
+        }
+
+    def _information_gain(self, feature, y, threshold):
+        parent_entropy = self._entropy(y)
+        left = y[feature <= threshold]
+        right = y[feature > threshold]
+        if len(left) == 0 or len(right) == 0:
+            return 0
+
+        n = len(y)
+        n_left, n_right = len(left), len(right)
+
+        child_entropy = (n_left / n) * self._entropy(left) + (n_right / n) * self._entropy(right)
+        return parent_entropy - child_entropy
+
+    @staticmethod
+    def _entropy(y):
+        proportions = np.bincount(y.astype(int)) / len(y)
+        return -np.sum([p * np.log2(p) for p in proportions if p > 0])
 
     def predict(self, X):
-        return np.array([self._traverse_tree(x, self.tree) for x in X])
+        return np.array([self._predict_sample(sample, self.tree) for sample in X])
 
-    def _traverse_tree(self, x, node):
-        if "value" in node:
-            return node["value"]
-        if x[node["feature"]] <= node["threshold"]:
-            return self._traverse_tree(x, node["left"])
-        return self._traverse_tree(x, node["right"])
+    def _predict_sample(self, sample, tree):
+        if tree["type"] == "leaf":
+            return tree["value"]
+        feature, threshold = tree["feature"], tree["threshold"]
+        if sample[feature] <= threshold:
+            return self._predict_sample(sample, tree["left"])
+        return self._predict_sample(sample, tree["right"])
+
+    def get_tree_height(self, tree=None, depth=0):
+        if tree is None:
+            tree = self.tree
+        if tree["type"] == "leaf":
+            return depth
+        return max(self.get_tree_height(tree["left"], depth + 1),
+                   self.get_tree_height(tree["right"], depth + 1))
