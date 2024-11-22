@@ -1,0 +1,5 @@
+from dt.plot.plots import show_gradient_boost_classifier, show_random_forest_classifier, show_decision_tree_classifier
+
+show_decision_tree_classifier()
+show_random_forest_classifier()
+show_gradient_boost_classifier()
