@@ -16,7 +16,7 @@ def get_data():
 
     data.replace({'x': 1, 'o': 0, 'b': -1}, inplace=True)
 
-    data['Class'] = data['Class'].apply(lambda x: 1 if x == 'positive' else -1)
+    data['Class'] = data['Class'].apply(lambda x: 1 if x == 'positive' else 0)
 
     return data
 
