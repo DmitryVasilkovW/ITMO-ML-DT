@@ -13,13 +13,13 @@ y_train = repo.get_axis("y", "train")
 y_test = repo.get_axis("y", "test")
 
 
-def show_my_decision_tree_impl():
+def show_my_decision_tree_impl(min_samples_split, min_samples_leaf):
     depths = range(1, 21)
     train_scores = []
     test_scores = []
 
     for depth in depths:
-        model = MyDecisionTree(max_depth=depth)
+        model = MyDecisionTree(max_depth=depth, min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf)
         model.fit(X_train, y_train)
         train_scores.append((model.predict(X_train) == y_train).mean())
         test_scores.append((model.predict(X_test) == y_test).mean())
@@ -34,13 +34,13 @@ def show_my_decision_tree_impl():
     plt.show()
 
 
-def show_my_random_forest_impl():
+def show_my_random_forest_impl(min_samples_split, min_samples_leaf):
     n_trees = range(1, 21)
     train_rf_scores = []
     test_rf_scores = []
 
     for n in n_trees:
-        rf = MyRandomForest(n_estimators=n)
+        rf = MyRandomForest(n_estimators=n, min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf)
         rf.fit(X_train, y_train)
         train_rf_scores.append((rf.predict(X_train) == y_train).mean())
         test_rf_scores.append((rf.predict(X_test) == y_test).mean())
@@ -55,13 +55,14 @@ def show_my_random_forest_impl():
     plt.show()
 
 
-def show_decision_tree_classifier_lib_impl():
+def show_decision_tree_classifier_lib_impl(min_samples_split, min_samples_leaf):
     depths = range(1, 21)
     train_scores = []
     test_scores = []
 
     for depth in depths:
-        model = DecisionTreeClassifier(max_depth=depth, random_state=42)
+        model = DecisionTreeClassifier(max_depth=depth, random_state=42, min_samples_split=min_samples_split,
+                                       min_samples_leaf=min_samples_leaf)
         model.fit(X_train, y_train)
         train_scores.append(model.score(X_train, y_train))
         test_scores.append(model.score(X_test, y_test))
@@ -76,13 +77,14 @@ def show_decision_tree_classifier_lib_impl():
     plt.show()
 
 
-def show_random_forest_classifier_lib_impl():
+def show_random_forest_classifier_lib_impl(min_samples_split, min_samples_leaf):
     n_trees = range(1, 21)
     train_rf_scores = []
     test_rf_scores = []
 
     for n in n_trees:
-        rf = RandomForestClassifier(n_estimators=n, random_state=42)
+        rf = RandomForestClassifier(n_estimators=n, random_state=42, min_samples_split=min_samples_split,
+                                    min_samples_leaf=min_samples_leaf)
         rf.fit(X_train, y_train)
         train_rf_scores.append(rf.score(X_train, y_train))
         test_rf_scores.append(rf.score(X_test, y_test))
@@ -97,13 +99,14 @@ def show_random_forest_classifier_lib_impl():
     plt.show()
 
 
-def show_gradient_boost_classifier_lib_impl():
+def show_gradient_boost_classifier_lib_impl(min_samples_split, min_samples_leaf):
     n_trees = range(1, 21)
     boosting_scores_train = []
     boosting_scores_test = []
 
     for n in n_trees:
-        boost = GradientBoostingClassifier(n_estimators=n, random_state=42)
+        boost = GradientBoostingClassifier(n_estimators=n, random_state=42, min_samples_split=min_samples_split,
+                                           min_samples_leaf=min_samples_leaf)
         boost.fit(X_train, y_train)
         boosting_scores_train.append(boost.score(X_train, y_train))
         boosting_scores_test.append(boost.score(X_test, y_test))
