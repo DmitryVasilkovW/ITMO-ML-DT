@@ -13,7 +13,9 @@ def get_data():
         'Class'
     ]
 
+    pd.set_option('future.no_silent_downcasting', True)
     data.replace({'x': 1, 'o': 0, 'b': -1}, inplace=True)
+    data = data.infer_objects(copy=False)
 
     data['Class'] = data['Class'].apply(lambda x: 1 if x == 'positive' else 0)
 
