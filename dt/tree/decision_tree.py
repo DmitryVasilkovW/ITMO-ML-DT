@@ -10,9 +10,9 @@ class MyDecisionTree:
 
     def fit(self, x, y):
         data = np.c_[x, y]
-        self.tree = self._build_tree(data, depth=0)
+        self.tree = self._build(data, depth=0)
 
-    def _build_tree(self, data, depth):
+    def _build(self, data, depth):
         x, y = data[:, :-1], data[:, -1]
         result = self._get_leaf_or_params(x, y, depth)
 
@@ -23,8 +23,8 @@ class MyDecisionTree:
         best_threshold = result[1]
         left_indices = result[2]
         right_indices = result[3]
-        left_subtree = self._build_tree(data[left_indices], depth + 1)
-        right_subtree = self._build_tree(data[right_indices], depth + 1)
+        left_subtree = self._build(data[left_indices], depth + 1)
+        right_subtree = self._build(data[right_indices], depth + 1)
 
         return {
             "type": "node",
@@ -116,11 +116,3 @@ class MyDecisionTree:
         if sample[feature] <= threshold:
             return self._predict_sample(sample, tree["left"])
         return self._predict_sample(sample, tree["right"])
-
-    def get_tree_height(self, tree=None, depth=0):
-        if tree is None:
-            tree = self.tree
-        if tree["type"] == "leaf":
-            return depth
-        return max(self.get_tree_height(tree["left"], depth + 1),
-                   self.get_tree_height(tree["right"], depth + 1))
