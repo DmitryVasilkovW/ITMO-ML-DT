@@ -1,6 +1,5 @@
 # Деревья решений и ансамбли
 
-[https://classroom.github.com/a/\_0S7sOh3](https://classroom.github.com/a/_0S7sOh3) 
 
 # Набор данных
 
